@@ -63,7 +63,8 @@ export async function updateSession(request: NextRequest) {
   const isProtectedRoute = 
     request.nextUrl.pathname.startsWith('/dashboard') ||
     request.nextUrl.pathname.startsWith('/seller') ||
-    request.nextUrl.pathname.startsWith('/role-selection')
+    request.nextUrl.pathname.startsWith('/role-selection') ||
+    request.nextUrl.pathname.startsWith('/kyc')
 
   // Redirect unauthenticated users from protected routes to login
   if (isProtectedRoute && !user) {
