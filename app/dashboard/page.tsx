@@ -6,7 +6,8 @@ import { Footer } from "@/components/footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Package, DollarSign, Eye, TrendingUp } from "lucide-react";
+import { Plus, Package, DollarSign, Eye, TrendingUp, ShieldCheck } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { SellerListingsTable } from "@/components/seller-listings-table";
 import type { Listing } from "@/lib/types";
 
@@ -51,6 +52,24 @@ export default async function DashboardPage() {
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
       <main className="flex-1 container mx-auto px-4 py-8">
+        {!profile.kyc_completed && (
+          <Alert className="mb-6 border-primary/50 bg-primary/5">
+            <ShieldCheck className="h-4 w-4 text-primary" />
+            <AlertTitle>Complete seller verification (KYC)</AlertTitle>
+            <AlertDescription className="flex flex-col sm:flex-row sm:items-center gap-3 mt-1">
+              <span>
+                Verify your identity to build trust with buyers and unlock full seller features.
+              </span>
+              <a
+                href="/kyc"
+                className="shrink-0 inline-flex items-center justify-center gap-1.5 rounded-md text-sm font-medium bg-primary text-primary-foreground h-9 px-4 hover:bg-primary/90"
+              >
+                Complete KYC
+              </a>
+            </AlertDescription>
+          </Alert>
+        )}
+
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
           <div>
             <h1 className="text-3xl font-serif font-bold text-foreground">

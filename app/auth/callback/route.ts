@@ -9,16 +9,26 @@ export async function GET(request: Request) {
     const supabase = await createClient();
     await supabase.auth.exchangeCodeForSession(code);
 
-    // Get user role to redirect appropriately
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
+      const role = user.user_metadata?.role as string | undefined;
+      if (role === "seller" || role === "buyer") {
+        await supabase
+          .from("profiles")
+          .update({ role, updated_at: new Date().toISOString() })
+          .eq("id", user.id);
+      }
+
       const { data: profile } = await supabase
         .from("profiles")
-        .select("role")
+        .select("role, last_role_selection")
         .eq("id", user.id)
         .single();
 
-      if (profile?.role === "seller") {
+      const isSeller =
+        profile?.role === "seller" ||
+        (profile as { last_role_selection?: string })?.last_role_selection === "seller";
+      if (isSeller) {
         return NextResponse.redirect(new URL("/dashboard", requestUrl.origin));
       }
     }

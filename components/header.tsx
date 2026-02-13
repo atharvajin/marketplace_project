@@ -26,6 +26,7 @@ import {
   LayoutDashboard,
   Menu,
   X,
+  ShieldCheck,
 } from "lucide-react";
 
 export function Header() {
@@ -104,6 +105,21 @@ export function Header() {
 
         {/* RIGHT SIDE */}
         <div className="flex items-center gap-4">
+          {(() => {
+            const role = profile?.role ?? (profile as { last_role_selection?: string })?.last_role_selection;
+            const isSeller = role === "seller";
+            const isBuyer = role === "buyer";
+            const showKyc = isSeller && !isBuyer && !profile?.kyc_completed;
+            return showKyc ? (
+              <a
+                href="/kyc"
+                className="inline-flex items-center gap-1.5 rounded-md border border-primary/50 bg-transparent px-3 py-2 text-sm font-medium text-primary hover:bg-primary/10"
+              >
+                <ShieldCheck className="h-4 w-4" />
+                <span className="hidden sm:inline">Complete KYC</span>
+              </a>
+            ) : null;
+          })()}
           {profile ? (
             <div className="flex items-center gap-3">
               {/* Show "Become a Seller" beside avatar ONLY if not already seller */}
@@ -144,18 +160,23 @@ export function Header() {
                       </p>
                     </div>
                   </div>
-
-                  <DropdownMenuSeparator />
-
-                  {profile.role === "seller" && (
+                </div>
+                <DropdownMenuSeparator />
+                {(() => {
+                  const role = profile.role ?? (profile as { last_role_selection?: string }).last_role_selection;
+                  const isSeller = role === "seller";
+                  const isBuyer = role === "buyer";
+                  const showKyc = isSeller && !isBuyer && !profile.kyc_completed;
+                  return showKyc ? (
                     <DropdownMenuItem asChild>
-                      <Link href="/dashboard" className="cursor-pointer">
-                        <LayoutDashboard className="mr-2 h-4 w-4" />
-                        Dashboard
-                      </Link>
+                      <a href="/kyc" className="cursor-pointer text-primary font-medium">
+                        <ShieldCheck className="mr-2 h-4 w-4" />
+                        Complete seller verification (KYC)
+                      </a>
                     </DropdownMenuItem>
-                  )}
-
+                  ) : null;
+                })()}
+                {profile.role === "seller" && (
                   <DropdownMenuItem asChild>
                     <Link href="/profile" className="cursor-pointer">
                       <User className="mr-2 h-4 w-4" />
@@ -220,7 +241,25 @@ export function Header() {
                 </Link>
               );
             })}
-
+            {(() => {
+              const role = profile?.role ?? (profile as { last_role_selection?: string })?.last_role_selection;
+              const isSeller = role === "seller";
+              const isBuyer = role === "buyer";
+              const showKyc = isSeller && !isBuyer && !profile?.kyc_completed;
+              return showKyc ? (
+                <>
+                  <hr className="border-border" />
+                  <a
+                    href="/kyc"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center gap-2 text-sm font-medium text-primary py-2"
+                  >
+                    <ShieldCheck className="h-4 w-4" />
+                    Complete seller verification (KYC)
+                  </a>
+                </>
+              ) : null;
+            })()}
             {!profile && (
               <>
                 <hr className="border-border" />
