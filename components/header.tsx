@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { Profile } from "@/lib/types";
 import { Button } from "@/components/ui/button";
+import { BecomeSellerButton } from "@/components/BecomeSellerButton";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -39,17 +40,20 @@ export function Header() {
       const {
         data: { user },
       } = await supabase.auth.getUser();
+
       if (user) {
         const { data } = await supabase
           .from("profiles")
           .select("*")
           .eq("id", user.id)
           .single();
-        if (data) {
-          setProfile(data);
-        }
+
+        if (data) setProfile(data);
+      } else {
+        setProfile(null);
       }
     }
+
     getProfile();
   }, [supabase]);
 
@@ -79,7 +83,10 @@ export function Header() {
           <nav className="hidden md:flex items-center gap-6">
             {navLinks.map((link) => {
               const Icon = link.icon;
-              const isActive = pathname === link.href || pathname.startsWith(link.href.split("?")[0] + "/");
+              const isActive =
+                pathname === link.href ||
+                pathname.startsWith(link.href.split("?")[0] + "/");
+
               return (
                 <Link
                   key={link.href}
@@ -96,6 +103,7 @@ export function Header() {
           </nav>
         </div>
 
+        {/* RIGHT SIDE */}
         <div className="flex items-center gap-4">
           {(() => {
             const role = profile?.role ?? (profile as { last_role_selection?: string })?.last_role_selection;
@@ -113,27 +121,44 @@ export function Header() {
             ) : null;
           })()}
           {profile ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-9 w-9 rounded-full">
-                  <Avatar className="h-9 w-9">
-                    <AvatarImage src={profile.avatar_url || undefined} alt={profile.display_name || "User"} />
-                    <AvatarFallback className="bg-primary text-primary-foreground">
-                      {profile.display_name?.[0] || profile.email[0].toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56" align="end" forceMount>
-                <div className="flex items-center justify-start gap-2 p-2">
-                  <div className="flex flex-col space-y-1 leading-none">
-                    {profile.display_name && (
-                      <p className="font-medium text-foreground">{profile.display_name}</p>
-                    )}
-                    <p className="w-[200px] truncate text-sm text-muted-foreground">
-                      {profile.email}
-                    </p>
-                    <p className="text-xs text-primary capitalize">{profile.role}</p>
+            <div className="flex items-center gap-3">
+              {/* Show "Become a Seller" beside avatar ONLY if not already seller */}
+              {profile.role !== "seller" && <BecomeSellerButton />}
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    className="relative h-9 w-9 rounded-full"
+                  >
+                    <Avatar className="h-9 w-9">
+                      <AvatarImage
+                        src={profile.avatar_url || undefined}
+                        alt={profile.display_name || "User"}
+                      />
+                      <AvatarFallback className="bg-primary text-primary-foreground">
+                        {profile.display_name?.[0] ||
+                          profile.email[0].toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                  </Button>
+                </DropdownMenuTrigger>
+
+                <DropdownMenuContent className="w-56" align="end" forceMount>
+                  <div className="flex items-center justify-start gap-2 p-2">
+                    <div className="flex flex-col space-y-1 leading-none">
+                      {profile.display_name && (
+                        <p className="font-medium text-foreground">
+                          {profile.display_name}
+                        </p>
+                      )}
+                      <p className="w-[200px] truncate text-sm text-muted-foreground">
+                        {profile.email}
+                      </p>
+                      <p className="text-xs text-primary capitalize">
+                        {profile.role}
+                      </p>
+                    </div>
                   </div>
                 </div>
                 <DropdownMenuSeparator />
@@ -153,25 +178,24 @@ export function Header() {
                 })()}
                 {profile.role === "seller" && (
                   <DropdownMenuItem asChild>
-                    <Link href="/dashboard" className="cursor-pointer">
-                      <LayoutDashboard className="mr-2 h-4 w-4" />
-                      Dashboard
+                    <Link href="/profile" className="cursor-pointer">
+                      <User className="mr-2 h-4 w-4" />
+                      Profile
                     </Link>
                   </DropdownMenuItem>
-                )}
-                <DropdownMenuItem asChild>
-                  <Link href="/profile" className="cursor-pointer">
-                    <User className="mr-2 h-4 w-4" />
-                    Profile
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer text-destructive">
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Sign out
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+
+                  <DropdownMenuSeparator />
+
+                  <DropdownMenuItem
+                    onClick={handleSignOut}
+                    className="cursor-pointer text-destructive"
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Sign out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           ) : (
             <div className="hidden sm:flex items-center gap-2">
               <Button variant="ghost" asChild>
@@ -183,17 +207,23 @@ export function Header() {
             </div>
           )}
 
+          {/* Mobile menu button */}
           <Button
             variant="ghost"
             size="icon"
             className="md:hidden"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
-            {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            {mobileMenuOpen ? (
+              <X className="h-5 w-5" />
+            ) : (
+              <Menu className="h-5 w-5" />
+            )}
           </Button>
         </div>
       </div>
 
+      {/* Mobile menu */}
       {mobileMenuOpen && (
         <div className="md:hidden border-t border-border bg-card p-4">
           <nav className="flex flex-col gap-3">
