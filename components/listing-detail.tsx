@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react"
+import React from "react";
 
 import { useState } from "react";
 import Image from "next/image";
@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { DealChatModal } from "@/components/deal-chat-modal";
 import {
   Clock,
   Package,
@@ -52,13 +53,20 @@ function getTimeRemaining(endTime: string): string {
   return `${minutes} minutes left`;
 }
 
-export function ListingDetail({ listing, bids, currentUserId }: ListingDetailProps) {
+export function ListingDetail({
+  listing,
+  bids,
+  currentUserId,
+}: ListingDetailProps) {
   const router = useRouter();
   const [selectedImage, setSelectedImage] = useState(0);
   const [bidAmount, setBidAmount] = useState("");
   const [bidLoading, setBidLoading] = useState(false);
   const [bidError, setBidError] = useState<string | null>(null);
   const [bidSuccess, setBidSuccess] = useState(false);
+
+  // Chat modal state
+  const [chatOpen, setChatOpen] = useState(false);
 
   const typeIcons = {
     digital: Download,
@@ -74,9 +82,10 @@ export function ListingDetail({ listing, bids, currentUserId }: ListingDetailPro
 
   const minBid = displayPrice + 0.01;
   const isOwner = currentUserId === listing.seller_id;
-  const auctionEnded = isAuction && listing.auction_end_time
-    ? new Date(listing.auction_end_time) < new Date()
-    : false;
+  const auctionEnded =
+    isAuction && listing.auction_end_time
+      ? new Date(listing.auction_end_time) < new Date()
+      : false;
 
   const handleBid = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -138,6 +147,7 @@ export function ListingDetail({ listing, bids, currentUserId }: ListingDetailPro
               </div>
             )}
           </div>
+
           {listing.images && listing.images.length > 1 && (
             <div className="flex gap-2 overflow-x-auto pb-2">
               {listing.images.map((img, i) => (
@@ -145,7 +155,9 @@ export function ListingDetail({ listing, bids, currentUserId }: ListingDetailPro
                   key={i}
                   onClick={() => setSelectedImage(i)}
                   className={`flex-shrink-0 w-20 h-20 rounded-md overflow-hidden border-2 transition-colors ${
-                    selectedImage === i ? "border-primary" : "border-transparent"
+                    selectedImage === i
+                      ? "border-primary"
+                      : "border-transparent"
                   }`}
                 >
                   <Image
@@ -202,7 +214,9 @@ export function ListingDetail({ listing, bids, currentUserId }: ListingDetailPro
               <Avatar>
                 <AvatarImage src={listing.seller.avatar_url || undefined} />
                 <AvatarFallback className="bg-primary text-primary-foreground">
-                  {listing.seller.display_name?.[0] || <User className="h-4 w-4" />}
+                  {listing.seller.display_name?.[0] || (
+                    <User className="h-4 w-4" />
+                  )}
                 </AvatarFallback>
               </Avatar>
               <div>
@@ -244,7 +258,9 @@ export function ListingDetail({ listing, bids, currentUserId }: ListingDetailPro
                     required
                   />
                   <Button type="submit" disabled={bidLoading}>
-                    {bidLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    {bidLoading && (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    )}
                     Place Bid
                   </Button>
                 </form>
@@ -259,9 +275,29 @@ export function ListingDetail({ listing, bids, currentUserId }: ListingDetailPro
               <Link href={`/dashboard/edit/${listing.id}`}>Edit Listing</Link>
             </Button>
           ) : (
-            <Button className="w-full" size="lg">
-              Buy Now for {formatPrice(displayPrice)}
-            </Button>
+            <>
+              <Button
+                className="w-full"
+                size="lg"
+                onClick={() => {
+                  if (!currentUserId) {
+                    router.push("/auth/login");
+                    return;
+                  }
+                  setChatOpen(true);
+                }}
+              >
+                Buy Now for {formatPrice(displayPrice)}
+              </Button>
+
+              <DealChatModal
+                open={chatOpen}
+                onClose={() => setChatOpen(false)}
+                listingId={listing.id}
+                sellerId={listing.seller_id}
+                listingTitle={listing.title}
+              />
+            </>
           )}
 
           {/* Description */}
@@ -303,7 +339,9 @@ export function ListingDetail({ listing, bids, currentUserId }: ListingDetailPro
                         {bid.bidder?.display_name || "Bidder"}
                       </span>
                       {i === 0 && (
-                        <Badge variant="default" className="text-xs">Highest</Badge>
+                        <Badge variant="default" className="text-xs">
+                          Highest
+                        </Badge>
                       )}
                     </div>
                     <span className="font-semibold text-foreground">
